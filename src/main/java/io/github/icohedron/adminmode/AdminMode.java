@@ -61,9 +61,10 @@ public class AdminMode {
     }
 
     private CommandResult disableAdminMode(Player player) {
-        if (player.supports(Keys.CAN_FLY)) {
+        if (player.supports(Keys.CAN_FLY) && player.supports(Keys.IS_FLYING) ) {
             active.remove(player.getUniqueId());
             player.offer(Keys.CAN_FLY, false);
+            player.offer(Keys.IS_FLYING, false);
             player.sendMessage(Text.of(TextColors.YELLOW, "You are no longer in admin mode"));
             return CommandResult.success();
         }
