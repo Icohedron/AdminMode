@@ -8,9 +8,7 @@ import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.event.Listener;
 import org.spongepowered.api.event.entity.DamageEntityEvent;
 import org.spongepowered.api.event.filter.cause.First;
-import org.spongepowered.api.event.game.GameReloadEvent;
 import org.spongepowered.api.event.game.state.GameInitializationEvent;
-import org.spongepowered.api.event.gen.ClientConnectionEvent$Disconnect$Impl;
 import org.spongepowered.api.event.network.ClientConnectionEvent;
 import org.spongepowered.api.plugin.Plugin;
 import org.spongepowered.api.text.Text;
@@ -20,7 +18,8 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 
-@Plugin(id = "adminmode", name = "Admin Mode", description = "Admin mode for survival servers")
+@Plugin(id = "adminmode", name = "Admin Mode", version = "1.0.0-S5.1",
+        description = "Admin mode for survival servers")
 public class AdminMode {
 
     private Set<UUID> active;

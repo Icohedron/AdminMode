@@ -3,7 +3,7 @@ plugins {
 }
 
 group 'io.github.icohedron.adminmode'
-version = '1.0-SNAPSHOT-1'
+version = '1.0.0-S5.1'
 
 description = 'Admin mode for survival servers'
 
