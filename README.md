@@ -1,4 +1,4 @@
-#Admin Mode
+# Admin Mode
 Admin mode for survival servers
 
 The only permission is 'adminmode.command'  
