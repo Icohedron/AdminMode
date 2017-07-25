@@ -1,0 +1,15 @@
+plugins {
+    id 'org.spongepowered.plugin' version '0.8.1'
+}
+
+group 'io.github.icohedron.adminmode'
+version = '1.0-SNAPSHOT-1'
+
+description = 'Admin mode for survival servers'
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+dependencies {
+    compile 'org.spongepowered:spongeapi:5.1.0'
+}
