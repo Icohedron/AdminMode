@@ -1,0 +1,54 @@
+package io.github.icohedron.adminmode;
+
+import me.lucko.luckperms.api.context.MutableContextSet;
+import org.spongepowered.api.command.CommandSource;
+import org.spongepowered.api.entity.living.player.Player;
+import org.spongepowered.api.service.context.Context;
+import org.spongepowered.api.service.context.ContextCalculator;
+import org.spongepowered.api.service.permission.Subject;
+
+import javax.annotation.Nonnull;
+import java.util.Optional;
+import java.util.Set;
+
+public class AMContextCalculator implements ContextCalculator<Subject>, me.lucko.luckperms.api.context.ContextCalculator<Subject> {
+
+    static final Context IN_ADMIN_MODE = new Context("adminmode-inAdminMode", "true");
+
+    // Luckperms API implementation
+    @Nonnull
+    @Override
+    public MutableContextSet giveApplicableContext(@Nonnull Subject subject, @Nonnull MutableContextSet accumulator) {
+        final Optional<CommandSource> commandSource = subject.getCommandSource();
+        if (commandSource.isPresent() && commandSource.get() instanceof Player) {
+            final Player player = (Player) commandSource.get();
+            if (AdminMode.getInstance().isInAdminMode(player)) {
+                accumulator.add(IN_ADMIN_MODE);
+            }
+        }
+        return accumulator;
+    }
+
+    // Sponge implementation
+    @Override
+    public void accumulateContexts(Subject calculable, Set<Context> accumulator) {
+        final Optional<CommandSource> commandSource = calculable.getCommandSource();
+        if (commandSource.isPresent() && commandSource.get() instanceof Player) {
+            final Player player = (Player) commandSource.get();
+            if (AdminMode.getInstance().isInAdminMode(player)) {
+                accumulator.add(IN_ADMIN_MODE);
+            }
+        }
+    }
+
+    @Override
+    public boolean matches(Context context, Subject subject) {
+        final Optional<CommandSource> commandSource = subject.getCommandSource();
+        if (!commandSource.isPresent() || !(commandSource.get() instanceof Player)) {
+            return false;
+        }
+
+        final Player player = (Player) commandSource.get();
+        return context.equals(IN_ADMIN_MODE) && AdminMode.getInstance().isInAdminMode(player);
+    }
+}
