@@ -58,6 +58,45 @@ adminmode.notify
 /adminmodeclearperms
 ```
 
+## Default Configuration File
+```
+# Permissions given to players in admin mode
+# Note: whenever you change or update these permissions, you should run '/amclearperms' to clear all previously existing permissions given by the plugin
+permissions: [
+    "prism.*",
+    "griefprevention.*"
+]
+
+# Items given to players when they enter admin mode
+items: [
+    {
+        id: compass
+        quantity: 1
+    },
+
+    {
+        id: stick
+        quantity: 1
+    },
+
+    {
+        id: golden_shovel
+        quantity: 1
+    }
+]
+
+# Attributes available to players in admin mode
+attributes: {
+    godmode: true
+    vanish: false
+    damage_other_entities: false
+    break_blocks: false
+    place_blocks: false
+    drop_items: false
+    pickup_items: false
+}
+```
+
 ### Known bugs
 - Items in the main inventory (the 3*9 grid inventory of the player) do not retain their original positions when the player enters and leaves admin mode -- the player's GridInventory slots appear to have no property "SlotIndex" or "SlotPos", so I am unable to fix this issue
 - '/amclearperms' and '/adminmodeclearperms' have a delay (up to 3 seconds or so) between executing the command, and the permissions being removed. Sometimes may fail to work at all (just re-execute the command if this happens)
