@@ -46,7 +46,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
-@Plugin(id = "adminmode", name = "Admin Mode", version = "2.1.0-S5.1-SNAPSHOT-1",
+@Plugin(id = "adminmode", name = "Admin Mode", version = "2.0.0-S5.1-SNAPSHOT-2",
         description = "Admin mode for survival servers")
 public class AdminMode {
 

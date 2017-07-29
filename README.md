@@ -101,4 +101,3 @@ attributes: {
 - Items in the main inventory (the 3*9 grid inventory of the player) do not retain their original positions when the player enters and leaves admin mode -- the player's GridInventory slots appear to have no property "SlotIndex" or "SlotPos", so I am unable to fix this issue
 - '/amclearperms' and '/adminmodeclearperms' have a delay (up to 3 seconds or so) between executing the command, and the permissions being removed. Sometimes may fail to work at all (just re-execute the command if this happens)
 - Even with the "drop_items" attribute false, dropping an item will cause it to disappear from the inventory (but no item entity will be spawned as a result of the drop)
-- Fire (if present) is not extinguished upon entering and leaving admin mode. Waiting for player class to support IgnitableData

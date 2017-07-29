@@ -7,6 +7,7 @@ import org.spongepowered.api.data.key.Keys;
 import org.spongepowered.api.data.manipulator.mutable.PotionEffectData;
 import org.spongepowered.api.data.manipulator.mutable.entity.ExperienceHolderData;
 import org.spongepowered.api.data.manipulator.mutable.entity.FoodData;
+import org.spongepowered.api.data.manipulator.mutable.entity.IgniteableData;
 import org.spongepowered.api.data.type.HandTypes;
 import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.item.inventory.Inventory;
@@ -16,11 +17,7 @@ import org.spongepowered.api.item.inventory.property.SlotIndex;
 import org.spongepowered.api.item.inventory.property.SlotPos;
 import org.spongepowered.api.world.Location;
 
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 @ConfigSerializable
 class AMPlayerData {
@@ -34,10 +31,7 @@ class AMPlayerData {
 
     @Setting private ExperienceHolderData experienceData;
     @Setting private PotionEffectData potionEffectData;
-//    @Setting private IgniteableData igniteableData;
-
-//    @Setting private int fireDamageDelay;
-//    @Setting private int fireTicks;
+    @Setting private IgniteableData igniteableData;
 
     // For some reason Sponge doesn't like deserializing FoodData (tries to cast float to double)
 //    @Setting private FoodData foodData;
@@ -59,14 +53,20 @@ class AMPlayerData {
         this.uuid = player.getUniqueId();
         this.location = player.getLocation();
 
-        this.experienceData = player.get(ExperienceHolderData.class).get().copy();
-        this.potionEffectData = player.get(PotionEffectData.class).get().copy();
+        this.experienceData = player.get(ExperienceHolderData.class).get();
 
-        // TODO: fire-related data when supported
-//        this.fireDamageDelay = player.get(Keys.FIRE_DAMAGE_DELAY).get();
-//        this.fireTicks = player.get(Keys.FIRE_TICKS).get();
+        this.potionEffectData = null;
+        Optional<PotionEffectData> potionEffectData = player.get(PotionEffectData.class);
+        if (potionEffectData.isPresent()) {
+            this.potionEffectData = potionEffectData.get();
+        }
 
-        // For some reason Sponge doesn't like deserializing FoodData (tries to cast float to double)
+        this.igniteableData = null;
+        Optional<IgniteableData> igniteableData = player.get(IgniteableData.class);
+        if (igniteableData.isPresent()) {
+            this.igniteableData = igniteableData.get();
+        }
+
 //        this.foodData = player.getFoodData().copy();
 
         FoodData foodData = player.getFoodData().copy();
@@ -130,17 +130,20 @@ class AMPlayerData {
         minExp.set(minExp.totalExperience().set(minExp.totalExperience().getMinValue()));
         player.offer(minExp);
 
-        PotionEffectData noEffects = player.get(PotionEffectData.class).get();
-        noEffects.set(noEffects.effects().removeAll(noEffects.effects()));
-        player.offer(noEffects);
+        Optional<PotionEffectData> effects = player.get(PotionEffectData.class);
+        if (effects.isPresent()) {
+            PotionEffectData noEffects = effects.get();
+            noEffects.set(noEffects.effects().removeAll(noEffects.effects()));
+            player.offer(noEffects);
+        }
 
-        player.offer(Keys.FIRE_DAMAGE_DELAY, 0);
-        player.offer(Keys.FIRE_TICKS, 0);
-
-//        IgniteableData noFire = player.get(IgniteableData.class).get();
-//        noFire.set(noFire.fireDelay().set(noFire.fireDelay().getMaxValue()));
-//        noFire.set(noFire.fireTicks().set(noFire.fireTicks().getMinValue()));
-//        player.offer(noFire);
+        Optional<IgniteableData> igniteable = player.get(IgniteableData.class);
+        if (igniteable.isPresent()) {
+            IgniteableData noFire = igniteable.get();
+            noFire.set(noFire.fireDelay().set(noFire.fireDelay().getMaxValue()));
+            noFire.set(noFire.fireTicks().set(noFire.fireTicks().getMinValue()));
+            player.offer(noFire);
+        }
 
         FoodData maxFood = player.getFoodData();
         maxFood.set(maxFood.exhaustion().set(maxFood.exhaustion().getMaxValue()));
@@ -150,12 +153,15 @@ class AMPlayerData {
     }
 
     void restore(Player player) {
+        clear(player);
         restoreLocation(player);
         player.offer(experienceData);
-        player.offer(potionEffectData);
-//        player.offer(igniteableData);
-//        player.offer(Keys.FIRE_DAMAGE_DELAY, fireDamageDelay);
-//        player.offer(Keys.FIRE_TICKS, fireTicks);
+        if (potionEffectData != null) {
+            player.offer(potionEffectData);
+        }
+        if (igniteableData != null) {
+            player.offer(igniteableData);
+        }
         restoreFoodData(player);
         restoreInventory(player);
     }
