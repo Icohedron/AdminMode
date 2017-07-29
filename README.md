@@ -11,7 +11,7 @@ A plugin that gives administrators (particularly in survival mode) abilities tha
 - Kick a player out of admin mode ('/amkick' or '/adminmodekick')
 - Modifiable (on/off) attributes: godmode, vanish, damage other entities, pickup/drop items, break/place blocks
 - Players in admin mode are put back to their pre-admin mode state when they disconnect from the server
-- Crash safe. If the server crashes, all players that were in admin mode are restored back to their pre-admin mode state upon reconnection to the server
+- Crash safe. If the server crashes, all players that were in admin mode are restored back to their pre-admin mode state upon reconnection to the server. (If the server crashed, the file amplayerdata.dat will contain all the information needed for the plugin to restore the player's pre-admin mode state. Most of the time, this file should be empty when the server is off)
 
 ## Permissions
 ```
