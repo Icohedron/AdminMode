@@ -88,7 +88,6 @@ items: [
 # Attributes available to players in admin mode
 attributes: {
     godmode: true
-    vanish: false
     damage_other_entities: false
     break_blocks: false
     place_blocks: false
@@ -98,6 +97,6 @@ attributes: {
 ```
 
 ### Known bugs
-- Items in the main inventory (the 3*9 grid inventory of the player) do not retain their original positions when the player enters and leaves admin mode -- the player's GridInventory slots appear to have no property "SlotIndex" or "SlotPos", so I am unable to fix this issue
-- '/amclearperms' and '/adminmodeclearperms' have a delay (up to 3 seconds or so) between executing the command, and the permissions being removed. Sometimes may fail to work at all (just re-execute the command if this happens)
+- '/amclearperms' and '/adminmodeclearperms' may have a delay (up to 3 seconds or so) between command execution and the permissions being removed. Sometimes may fail to work at all (just re-execute the command if this happens)
 - Even with the "drop_items" attribute false, dropping an item will cause it to disappear from the inventory (but no item entity will be spawned as a result of the drop)
+- Items in the player's main inventory (3*9 slots) and ender chest will not retain their original positions after entering and leaving admin mode

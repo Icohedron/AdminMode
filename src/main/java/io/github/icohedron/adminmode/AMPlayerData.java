@@ -1,9 +1,7 @@
 package io.github.icohedron.adminmode;
 
-import com.flowpowered.math.vector.Vector2i;
 import ninja.leaping.configurate.objectmapping.Setting;
 import ninja.leaping.configurate.objectmapping.serialize.ConfigSerializable;
-import org.spongepowered.api.data.key.Keys;
 import org.spongepowered.api.data.manipulator.mutable.PotionEffectData;
 import org.spongepowered.api.data.manipulator.mutable.entity.ExperienceHolderData;
 import org.spongepowered.api.data.manipulator.mutable.entity.FoodData;
@@ -14,10 +12,14 @@ import org.spongepowered.api.item.inventory.Inventory;
 import org.spongepowered.api.item.inventory.ItemStackSnapshot;
 import org.spongepowered.api.item.inventory.entity.PlayerInventory;
 import org.spongepowered.api.item.inventory.property.SlotIndex;
-import org.spongepowered.api.item.inventory.property.SlotPos;
 import org.spongepowered.api.world.Location;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
 
 @ConfigSerializable
 class AMPlayerData {
@@ -42,7 +44,7 @@ class AMPlayerData {
 
     @Setting private Map<Integer, ItemStackSnapshot> equipment;
     @Setting private Map<Integer, ItemStackSnapshot> hotbar;
-    @Setting private Map<Vector2i, ItemStackSnapshot> enderChest;
+    @Setting private List<ItemStackSnapshot> enderChest;
     @Setting private List<ItemStackSnapshot> main;
     @Setting private ItemStackSnapshot offhand;
 
@@ -76,7 +78,7 @@ class AMPlayerData {
 
         this.equipment = new HashMap<>();
         this.hotbar = new HashMap<>();
-        this.enderChest = new HashMap<>();
+        this.enderChest = new LinkedList<>();
         this.main = new LinkedList<>();
         this.offhand = null;
 
@@ -98,12 +100,10 @@ class AMPlayerData {
 
         for (Inventory slot : player.getEnderChestInventory().slots()) {
             if (slot.peek().isPresent()) {
-                SlotPos slotPos = slot.getProperty(SlotPos.class, "slotpos").get();
-                enderChest.put(new Vector2i(slotPos.getX(), slotPos.getY()), slot.peek().get().createSnapshot());
+                enderChest.add(slot.peek().get().createSnapshot());
             }
         }
 
-        // TODO: When the inventory API is fixed, retain slot positions for items in main inventory
         for (Inventory slot : inventory.getMain().slots()) {
             if (slot.peek().isPresent()) {
                 main.add(slot.peek().get().createSnapshot());
@@ -190,8 +190,8 @@ class AMPlayerData {
             hotbar.query(new SlotIndex(slotIndex)).set(this.hotbar.get(slotIndex).createStack());
         }
 
-        for (Vector2i slotPos : this.enderChest.keySet()) {
-            enderChest.query(new SlotPos(slotPos.getX(), slotPos.getY())).set(this.enderChest.get(slotPos).createStack());
+        for (ItemStackSnapshot itemStackSnapshot : this.enderChest) {
+            enderChest.offer(itemStackSnapshot.createStack());
         }
 
         for (ItemStackSnapshot itemStackSnapshot : this.main) {

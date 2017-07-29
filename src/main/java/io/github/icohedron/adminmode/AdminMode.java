@@ -1,5 +1,6 @@
 package io.github.icohedron.adminmode;
 
+import com.flowpowered.math.vector.Vector2i;
 import com.google.common.reflect.TypeToken;
 import com.google.inject.Inject;
 import ninja.leaping.configurate.ConfigurationNode;
@@ -46,7 +47,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
-@Plugin(id = "adminmode", name = "Admin Mode", version = "2.0.0-S5.1-SNAPSHOT-2",
+@Plugin(id = "adminmode", name = "Admin Mode", version = "2.0.0-S5.1-SNAPSHOT-3",
         description = "Admin mode for survival servers")
 public class AdminMode {
 
@@ -138,7 +139,6 @@ public class AdminMode {
 
                 attributes = new HashMap<>();
                 attributes.put("godmode", rootNode.getNode("attributes", "godmode").getBoolean(true));
-                attributes.put("vanish", rootNode.getNode("attributes", "vanish").getBoolean(false));
                 attributes.put("damage_other_entities", rootNode.getNode("attributes", "damage_other_entities").getBoolean(false));
                 attributes.put("break_blocks", rootNode.getNode("attributes", "break_blocks").getBoolean(false));
                 attributes.put("place_blocks", rootNode.getNode("attributes", "place_blocks").getBoolean(false));
@@ -272,10 +272,6 @@ public class AdminMode {
             // Give flight
             player.offer(Keys.CAN_FLY, true);
 
-            if (hasAttribute("vanish")) {
-                player.offer(Keys.VANISH, true);
-            }
-
             // Give contextual permissions if the player does not already have them
             Set<Context> contexts = new HashSet<>();
             contexts.add(AMContextCalculator.IN_ADMIN_MODE);
@@ -325,10 +321,6 @@ public class AdminMode {
             // Disable flight
             player.offer(Keys.CAN_FLY, false);
             player.offer(Keys.IS_FLYING, false);
-
-            player.offer(Keys.VANISH, false);
-
-            player.offer(Keys.IS_AFLAME, false);
 
             // Broadcast leaving admin mode
             if (kicker != null) {
