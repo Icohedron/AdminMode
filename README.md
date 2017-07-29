@@ -5,7 +5,7 @@ A plugin that gives administrators (particularly in survival mode) abilities tha
 - Upon entering admin mode, the player's current inventory, food, experience, and location is stored in memory. When the player leaves admin mode, their inventory, food, experience, and location are restored
 - Configurable list of permissions that are given to players upon entering admin mode
 - A command to easily remove all permissions that have been given to players by this plugin ('/amclearperms' or '/adminmodeclearperms')
-- Entering admin mode with a victim name (the player the admin is going to help) and a reason. Both of which are entirely optional ('/adminmode [reason]'
+- Entering admin mode with a victim name (the player the admin is going to help) and a reason. Both of which are entirely optional ('/adminmode [reason]')
 - Messages that broadcast to other admins (such as when a player enters/leaves admin mode) (uses the permission 'adminmode.notify')
 - View a list of players that are currently in admin mode ('/amlist' or '/adminmodelist')
 - Kick a player out of admin mode ('/amkick' or '/adminmodekick')
