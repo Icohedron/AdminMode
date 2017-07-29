@@ -2,7 +2,7 @@
 A plugin that gives administrators (particularly in survival mode) abilities that make their jobs easier to do.
 
 ## Features
-- Upon entering admin mode, the player's current inventory, food, experience, and location is stored in memory. When the player leaves admin mode, their inventory, food, experience, and location are restored
+- Upon entering admin mode, the player's current inventory, food, experience, status effects, and location is stored in memory. When the player leaves admin mode, their inventory, food, experience, status effects, and location are restored
 - Configurable list of permissions that are given to players upon entering admin mode
 - A command to easily remove all permissions that have been given to players by this plugin ('/amclearperms' or '/adminmodeclearperms')
 - Entering admin mode with a victim name (the player the admin is going to help) and a reason. Both of which are entirely optional ('/adminmode [reason]')
@@ -101,3 +101,4 @@ attributes: {
 - Items in the main inventory (the 3*9 grid inventory of the player) do not retain their original positions when the player enters and leaves admin mode -- the player's GridInventory slots appear to have no property "SlotIndex" or "SlotPos", so I am unable to fix this issue
 - '/amclearperms' and '/adminmodeclearperms' have a delay (up to 3 seconds or so) between executing the command, and the permissions being removed. Sometimes may fail to work at all (just re-execute the command if this happens)
 - Even with the "drop_items" attribute false, dropping an item will cause it to disappear from the inventory (but no item entity will be spawned as a result of the drop)
+- Fire (if present) is not extinguished upon entering and leaving admin mode. Waiting for player class to support IgnitableData

@@ -3,6 +3,8 @@ package io.github.icohedron.adminmode;
 import com.flowpowered.math.vector.Vector2i;
 import ninja.leaping.configurate.objectmapping.Setting;
 import ninja.leaping.configurate.objectmapping.serialize.ConfigSerializable;
+import org.spongepowered.api.data.key.Keys;
+import org.spongepowered.api.data.manipulator.mutable.PotionEffectData;
 import org.spongepowered.api.data.manipulator.mutable.entity.ExperienceHolderData;
 import org.spongepowered.api.data.manipulator.mutable.entity.FoodData;
 import org.spongepowered.api.data.type.HandTypes;
@@ -30,7 +32,12 @@ class AMPlayerData {
     @Setting private UUID uuid;
     @Setting private Location location;
 
-    @Setting private ExperienceHolderData experience;
+    @Setting private ExperienceHolderData experienceData;
+    @Setting private PotionEffectData potionEffectData;
+//    @Setting private IgniteableData igniteableData;
+
+//    @Setting private int fireDamageDelay;
+//    @Setting private int fireTicks;
 
     // For some reason Sponge doesn't like deserializing FoodData (tries to cast float to double)
 //    @Setting private FoodData foodData;
@@ -52,8 +59,12 @@ class AMPlayerData {
         this.uuid = player.getUniqueId();
         this.location = player.getLocation();
 
+        this.experienceData = player.get(ExperienceHolderData.class).get().copy();
+        this.potionEffectData = player.get(PotionEffectData.class).get().copy();
 
-        this.experience = player.get(ExperienceHolderData.class).get().copy();
+        // TODO: fire-related data when supported
+//        this.fireDamageDelay = player.get(Keys.FIRE_DAMAGE_DELAY).get();
+//        this.fireTicks = player.get(Keys.FIRE_TICKS).get();
 
         // For some reason Sponge doesn't like deserializing FoodData (tries to cast float to double)
 //        this.foodData = player.getFoodData().copy();
@@ -119,6 +130,18 @@ class AMPlayerData {
         minExp.set(minExp.totalExperience().set(minExp.totalExperience().getMinValue()));
         player.offer(minExp);
 
+        PotionEffectData noEffects = player.get(PotionEffectData.class).get();
+        noEffects.set(noEffects.effects().removeAll(noEffects.effects()));
+        player.offer(noEffects);
+
+        player.offer(Keys.FIRE_DAMAGE_DELAY, 0);
+        player.offer(Keys.FIRE_TICKS, 0);
+
+//        IgniteableData noFire = player.get(IgniteableData.class).get();
+//        noFire.set(noFire.fireDelay().set(noFire.fireDelay().getMaxValue()));
+//        noFire.set(noFire.fireTicks().set(noFire.fireTicks().getMinValue()));
+//        player.offer(noFire);
+
         FoodData maxFood = player.getFoodData();
         maxFood.set(maxFood.exhaustion().set(maxFood.exhaustion().getMaxValue()));
         maxFood.set(maxFood.saturation().set(maxFood.saturation().getMaxValue()));
@@ -128,9 +151,13 @@ class AMPlayerData {
 
     void restore(Player player) {
         restoreLocation(player);
-        restoreInventory(player);
-        restoreExperience(player);
+        player.offer(experienceData);
+        player.offer(potionEffectData);
+//        player.offer(igniteableData);
+//        player.offer(Keys.FIRE_DAMAGE_DELAY, fireDamageDelay);
+//        player.offer(Keys.FIRE_TICKS, fireTicks);
         restoreFoodData(player);
+        restoreInventory(player);
     }
 
     private void restoreLocation(Player player) {
@@ -168,10 +195,6 @@ class AMPlayerData {
         if (offhand != null) {
             player.setItemInHand(HandTypes.OFF_HAND, offhand.createStack());
         }
-    }
-
-    private void restoreExperience(Player player) {
-        player.offer(experience);
     }
 
     private void restoreFoodData(Player player) {

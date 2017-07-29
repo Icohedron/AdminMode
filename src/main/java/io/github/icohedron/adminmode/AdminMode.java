@@ -46,7 +46,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
-@Plugin(id = "adminmode", name = "Admin Mode", version = "2.0.0-S5.1-SNAPSHOT-1",
+@Plugin(id = "adminmode", name = "Admin Mode", version = "2.1.0-S5.1-SNAPSHOT-1",
         description = "Admin mode for survival servers")
 public class AdminMode {
 
@@ -101,104 +101,6 @@ public class AdminMode {
         registerCommands();
         Sponge.getEventManager().registerListeners(this, new AMListener());
         logger.info("Finished initialization");
-    }
-
-    private CommandResult enableAdminMode(Player player, String reason) {
-        if (player.supports(Keys.CAN_FLY)) {
-
-            // Create player data
-            AMPlayerData playerData = new AMPlayerData(player);
-
-            // Save player data to disk in case of crash
-            serializePlayerData(playerData);
-
-            // Add to active admin mode players
-            active.put(player.getUniqueId(), playerData);
-
-            // Clears inventory, food, and experience
-            AMPlayerData.clear(player);
-
-            // Give items as specified in the config file
-            for (ItemStackSnapshot itemSnapshot : adminModeItems) {
-                player.getInventory().offer(itemSnapshot.createStack());
-            }
-
-            // Give flight
-            player.offer(Keys.CAN_FLY, true);
-
-            if (hasAttribute("vanish")) {
-                player.offer(Keys.VANISH, true);
-            }
-
-            // Give contextual permissions if the player does not already have them
-            Set<Context> contexts = new HashSet<>();
-            contexts.add(AMContextCalculator.IN_ADMIN_MODE);
-            for (String permission : adminModePermissions) {
-                if (!player.hasPermission(contexts, permission)) {
-                    player.getSubjectData().setPermission(contexts, permission, Tristate.TRUE);
-                }
-            }
-
-            // Broadcast going into admin mode message
-            Text text = Text.of(prefix, TextColors.YELLOW, "'", TextColors.GREEN, player.getName(), TextColors.YELLOW, "' has entered admin mode");
-            if (reason != null) {
-                text = Text.of(text, TextColors.YELLOW, " to ", reason);
-            }
-            text = Text.of(text, TextColors.YELLOW, "!");
-            broadcastToAdmins(text);
-
-            // Tell player that they are in admin mode if they haven't received the global message
-            if (!player.hasPermission("adminmode.notify")) {
-                player.sendMessage(Text.of(prefix, TextColors.YELLOW, "You are now in admin mode"));
-            }
-            return CommandResult.success();
-        }
-        player.sendMessage(Text.of(TextColors.RED, "Unable to enable admin mode"));
-        return CommandResult.empty();
-    }
-
-    private CommandResult disableAdminMode(Player player) {
-        return disableAdminMode(player, null);
-    }
-
-    private CommandResult disableAdminMode(Player player, String kicker) {
-        if (player.supports(Keys.CAN_FLY) && player.supports(Keys.IS_FLYING) ) {
-
-            // Get player data
-            AMPlayerData playerData = active.get(player.getUniqueId());
-
-            // Remove player data from disk
-            removePlayerData(playerData);
-
-            // Restore player's inventory, food, and experience
-            playerData.restore(player);
-
-            // Remove player from admin mode list
-            active.remove(player.getUniqueId());
-
-            // Disable flight
-            player.offer(Keys.CAN_FLY, false);
-            player.offer(Keys.IS_FLYING, false);
-
-            player.offer(Keys.VANISH, false);
-
-            // Broadcast leaving admin mode
-            if (kicker != null) {
-                Text text = Text.of(prefix, TextColors.YELLOW, "'", TextColors.GREEN, player.getName(), TextColors.YELLOW, "' has been kicked out of admin mode by '", TextColors.AQUA, kicker, TextColors.YELLOW, "'!");
-                broadcastToAdmins(text);
-            } else {
-                Text text = Text.of(prefix, TextColors.YELLOW, "'", TextColors.GREEN, player.getName(), TextColors.YELLOW, "' has left admin mode!");
-                broadcastToAdmins(text);
-            }
-
-            // Tell player that they are no longer in admin mode if they haven't received the global message
-            if (!player.hasPermission("adminmode.notify")) {
-                player.sendMessage(Text.of(prefix, TextColors.YELLOW, "You are no longer in admin mode"));
-            }
-            return CommandResult.success();
-        }
-        player.sendMessage(Text.of(prefix, TextColors.RED, "Unable to disable admin mode"));
-        return CommandResult.empty();
     }
 
     private void loadConfig() {
@@ -345,6 +247,106 @@ public class AdminMode {
         Sponge.getCommandManager().register(this, adminmodelist, "adminmodelist", "amlist");
         Sponge.getCommandManager().register(this, adminmodekick, "adminmodekick", "amkick");
         Sponge.getCommandManager().register(this, clearPermissions, "adminmodeclearperms", "amclearperms");
+    }
+
+    private CommandResult enableAdminMode(Player player, String reason) {
+        if (player.supports(Keys.CAN_FLY)) {
+
+            // Create player data
+            AMPlayerData playerData = new AMPlayerData(player);
+
+            // Save player data to disk in case of crash
+            serializePlayerData(playerData);
+
+            // Add to active admin mode players
+            active.put(player.getUniqueId(), playerData);
+
+            // Clears inventory, food, and experience
+            AMPlayerData.clear(player);
+
+            // Give items as specified in the config file
+            for (ItemStackSnapshot itemSnapshot : adminModeItems) {
+                player.getInventory().offer(itemSnapshot.createStack());
+            }
+
+            // Give flight
+            player.offer(Keys.CAN_FLY, true);
+
+            if (hasAttribute("vanish")) {
+                player.offer(Keys.VANISH, true);
+            }
+
+            // Give contextual permissions if the player does not already have them
+            Set<Context> contexts = new HashSet<>();
+            contexts.add(AMContextCalculator.IN_ADMIN_MODE);
+            for (String permission : adminModePermissions) {
+                if (!player.hasPermission(contexts, permission)) {
+                    player.getSubjectData().setPermission(contexts, permission, Tristate.TRUE);
+                }
+            }
+
+            // Broadcast going into admin mode message
+            Text text = Text.of(prefix, TextColors.YELLOW, "'", TextColors.GREEN, player.getName(), TextColors.YELLOW, "' has entered admin mode");
+            if (reason != null) {
+                text = Text.of(text, TextColors.YELLOW, " to ", reason);
+            }
+            text = Text.of(text, TextColors.YELLOW, "!");
+            broadcastToAdmins(text);
+
+            // Tell player that they are in admin mode if they haven't received the global message
+            if (!player.hasPermission("adminmode.notify")) {
+                player.sendMessage(Text.of(prefix, TextColors.YELLOW, "You are now in admin mode"));
+            }
+            return CommandResult.success();
+        }
+        player.sendMessage(Text.of(TextColors.RED, "Unable to enable admin mode"));
+        return CommandResult.empty();
+    }
+
+    private CommandResult disableAdminMode(Player player) {
+        return disableAdminMode(player, null);
+    }
+
+    private CommandResult disableAdminMode(Player player, String kicker) {
+        if (player.supports(Keys.CAN_FLY) && player.supports(Keys.IS_FLYING) ) {
+
+            // Get player data
+            AMPlayerData playerData = active.get(player.getUniqueId());
+
+            // Remove player data from disk
+            removePlayerData(playerData);
+
+            // Restore player's inventory, food, and experience
+            playerData.restore(player);
+
+            // Remove player from admin mode list
+            active.remove(player.getUniqueId());
+
+            // Disable flight
+            player.offer(Keys.CAN_FLY, false);
+            player.offer(Keys.IS_FLYING, false);
+
+            player.offer(Keys.VANISH, false);
+
+            player.offer(Keys.IS_AFLAME, false);
+
+            // Broadcast leaving admin mode
+            if (kicker != null) {
+                Text text = Text.of(prefix, TextColors.YELLOW, "'", TextColors.GREEN, player.getName(), TextColors.YELLOW, "' has been kicked out of admin mode by '", TextColors.AQUA, kicker, TextColors.YELLOW, "'!");
+                broadcastToAdmins(text);
+            } else {
+                Text text = Text.of(prefix, TextColors.YELLOW, "'", TextColors.GREEN, player.getName(), TextColors.YELLOW, "' has left admin mode!");
+                broadcastToAdmins(text);
+            }
+
+            // Tell player that they are no longer in admin mode if they haven't received the global message
+            if (!player.hasPermission("adminmode.notify")) {
+                player.sendMessage(Text.of(prefix, TextColors.YELLOW, "You are no longer in admin mode"));
+            }
+            return CommandResult.success();
+        }
+        player.sendMessage(Text.of(prefix, TextColors.RED, "Unable to disable admin mode"));
+        return CommandResult.empty();
     }
 
     private void serializePlayerData(AMPlayerData playerData) {
