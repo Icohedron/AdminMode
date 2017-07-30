@@ -154,20 +154,20 @@ class AMPlayerData {
 
     void restore(Player player) {
         clear(player);
-        restoreLocation(player);
+
+        player.setLocation(location);
         player.offer(experienceData);
+
         if (potionEffectData != null) {
             player.offer(potionEffectData);
         }
+
         if (igniteableData != null) {
             player.offer(igniteableData);
         }
+
         restoreFoodData(player);
         restoreInventory(player);
-    }
-
-    private void restoreLocation(Player player) {
-        player.setLocation(location);
     }
 
     private void restoreInventory(Player player) {
@@ -182,23 +182,31 @@ class AMPlayerData {
         Inventory enderChest = player.getEnderChestInventory();
         Inventory main = playerInventory.getMain();
 
-        for (int slotIndex : this.equipment.keySet()) {
-            equipment.query(new SlotIndex(slotIndex)).set(this.equipment.get(slotIndex).createStack());
+        if (this.equipment != null) {
+            for (int slotIndex : this.equipment.keySet()) {
+                equipment.query(new SlotIndex(slotIndex)).set(this.equipment.get(slotIndex).createStack());
+            }
         }
 
-        for (int slotIndex : this.hotbar.keySet()) {
-            hotbar.query(new SlotIndex(slotIndex)).set(this.hotbar.get(slotIndex).createStack());
+        if (this.hotbar != null) {
+            for (int slotIndex : this.hotbar.keySet()) {
+                hotbar.query(new SlotIndex(slotIndex)).set(this.hotbar.get(slotIndex).createStack());
+            }
         }
 
-        for (ItemStackSnapshot itemStackSnapshot : this.enderChest) {
-            enderChest.offer(itemStackSnapshot.createStack());
+        if (this.enderChest != null) {
+            for (ItemStackSnapshot itemStackSnapshot : this.enderChest) {
+                enderChest.offer(itemStackSnapshot.createStack());
+            }
         }
 
-        for (ItemStackSnapshot itemStackSnapshot : this.main) {
-            main.offer(itemStackSnapshot.createStack());
+        if (this.main != null) {
+            for (ItemStackSnapshot itemStackSnapshot : this.main) {
+                main.offer(itemStackSnapshot.createStack());
+            }
         }
 
-        if (offhand != null) {
+        if (this.offhand != null) {
             player.setItemInHand(HandTypes.OFF_HAND, offhand.createStack());
         }
     }
