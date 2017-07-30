@@ -1,6 +1,5 @@
 package io.github.icohedron.adminmode;
 
-import com.flowpowered.math.vector.Vector2i;
 import com.google.common.reflect.TypeToken;
 import com.google.inject.Inject;
 import ninja.leaping.configurate.ConfigurationNode;
@@ -15,9 +14,9 @@ import org.spongepowered.api.command.args.GenericArguments;
 import org.spongepowered.api.command.spec.CommandSpec;
 import org.spongepowered.api.config.ConfigDir;
 import org.spongepowered.api.data.key.Keys;
-import org.spongepowered.api.data.manipulator.mutable.entity.FlyingAbilityData;
-import org.spongepowered.api.data.manipulator.mutable.entity.FlyingData;
 import org.spongepowered.api.entity.living.player.Player;
+import org.spongepowered.api.entity.living.player.gamemode.GameMode;
+import org.spongepowered.api.entity.living.player.gamemode.GameModes;
 import org.spongepowered.api.event.Listener;
 import org.spongepowered.api.event.filter.cause.First;
 import org.spongepowered.api.event.game.GameReloadEvent;
@@ -331,19 +330,12 @@ public class AdminMode {
     }
 
     private void enableFlight(Player player) {
-        FlyingAbilityData flyingAbilityData = player.get(FlyingAbilityData.class).get();
-        flyingAbilityData.set(flyingAbilityData.canFly().set(true));
-        player.offer(flyingAbilityData);
+        player.offer(Keys.CAN_FLY, true);
     }
 
     private void disableFlight(Player player) {
-        FlyingData flyingData = player.get(FlyingData.class).get();
-        flyingData.set(flyingData.flying().set(false));
-        player.offer(flyingData);
-
-        FlyingAbilityData flyingAbilityData = player.get(FlyingAbilityData.class).get();
-        flyingAbilityData.set(flyingAbilityData.canFly().set(false));
-        player.offer(flyingAbilityData);
+        player.offer(Keys.CAN_FLY, false);
+        player.offer(Keys.IS_FLYING, false);
     }
 
     private void serializePlayerData(AMPlayerData playerData) {
@@ -396,6 +388,8 @@ public class AdminMode {
 
     @Listener
     public void onPlayerConnect(ClientConnectionEvent.Join event, @First Player player) {
+
+        // Restore player data upon reconnect (in the case of a crash, the player's data should be here)
         final ConfigurationNode node = amplayerdataNode.getNode(player.getUniqueId().toString());
         if (!node.isVirtual()) {
 
@@ -410,12 +404,18 @@ public class AdminMode {
             }
 
         }
+
+        // For some reason, this must be here in order to prevent flight persisting across disconnects and server restarts/crashes even though we already disabled flight.
+        GameMode gameMode = player.get(Keys.GAME_MODE).get();
+        if (gameMode.equals(GameModes.SURVIVAL) || gameMode.equals(GameModes.ADVENTURE)) {
+            disableFlight(player);
+        }
     }
 
     @Listener
     public void onPlayerDisconnect(ClientConnectionEvent.Disconnect event, @First Player player) {
         if (isInAdminMode(player)) {
-            disableAdminMode(player, "Disconnect");
+            disableAdminMode(player, "<Disconnect>");
         }
     }
 
@@ -429,7 +429,7 @@ public class AdminMode {
     public void onGameStoppingServerEvent(GameStoppingServerEvent event) {
         for (Player player : Sponge.getServer().getOnlinePlayers()) {
             if (isInAdminMode(player)) {
-                disableAdminMode(player, "Server Stopping");
+                disableAdminMode(player, "<Server Stopping>");
             }
         }
     }
