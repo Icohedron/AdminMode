@@ -97,6 +97,5 @@ attributes: {
 ```
 
 ### Known bugs
-- '/amclearperms' and '/adminmodeclearperms' may have a delay (up to 3 seconds or so) between command execution and the permissions being removed. Sometimes may fail to work at all (just re-execute the command if this happens)
-- Even with the "drop_items" attribute false, dropping an item will cause it to disappear from the inventory (but no item entity will be spawned as a result of the drop)
-- Items in the player's main inventory (3*9 slots) and ender chest will not retain their original positions after entering and leaving admin mode
+- '/amclearperms' and '/adminmodeclearperms' *may* have a delay (up to 3 seconds or so) between command execution and the permissions being removed. Rarely may fail to work at all (just re-execute the command if this happens)
+- In admin mode, with the "drop_items" attribute false, dropped items are returned to the player in the first available hotbar or grid slot. However, if a player drops an item while their inventory ui is open, the reappeared item may not display despite it being there.

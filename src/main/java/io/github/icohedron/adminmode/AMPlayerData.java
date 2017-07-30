@@ -1,5 +1,6 @@
 package io.github.icohedron.adminmode;
 
+import com.flowpowered.math.vector.Vector2i;
 import ninja.leaping.configurate.objectmapping.Setting;
 import ninja.leaping.configurate.objectmapping.serialize.ConfigSerializable;
 import org.spongepowered.api.data.manipulator.mutable.PotionEffectData;
@@ -10,13 +11,14 @@ import org.spongepowered.api.data.type.HandTypes;
 import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.item.inventory.Inventory;
 import org.spongepowered.api.item.inventory.ItemStackSnapshot;
+import org.spongepowered.api.item.inventory.entity.Hotbar;
 import org.spongepowered.api.item.inventory.entity.PlayerInventory;
+import org.spongepowered.api.item.inventory.equipment.EquipmentInventory;
 import org.spongepowered.api.item.inventory.property.SlotIndex;
+import org.spongepowered.api.item.inventory.type.GridInventory;
 import org.spongepowered.api.world.Location;
 
 import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -44,8 +46,8 @@ class AMPlayerData {
 
     @Setting private Map<Integer, ItemStackSnapshot> equipment;
     @Setting private Map<Integer, ItemStackSnapshot> hotbar;
-    @Setting private List<ItemStackSnapshot> enderChest;
-    @Setting private List<ItemStackSnapshot> main;
+    @Setting private Map<Integer, ItemStackSnapshot> enderChest;
+    @Setting private Map<Integer, ItemStackSnapshot> main;
     @Setting private ItemStackSnapshot offhand;
 
     AMPlayerData() {}
@@ -78,8 +80,8 @@ class AMPlayerData {
 
         this.equipment = new HashMap<>();
         this.hotbar = new HashMap<>();
-        this.enderChest = new LinkedList<>();
-        this.main = new LinkedList<>();
+        this.enderChest = new HashMap<>();
+        this.main = new HashMap<>();
         this.offhand = null;
 
         PlayerInventory inventory = (PlayerInventory) player.getInventory();
@@ -98,17 +100,41 @@ class AMPlayerData {
             }
         }
 
-        for (Inventory slot : player.getEnderChestInventory().slots()) {
-            if (slot.peek().isPresent()) {
-                enderChest.add(slot.peek().get().createSnapshot());
+        // Notes: Vector2i serialization works, but deserialization doesn't work apparently.
+        // So I'll just store the vector as an integer. We know the grid inventory is 3*9, which are both single digits.
+        // So the format will by xy. (e.g. x=2,y=4 becomes 24)
+
+        GridInventory ecInv = player.getEnderChestInventory().query(GridInventory.class);
+        Vector2i ecDim = ecInv.getDimensions();
+        for (int y = 0; y < ecDim.getY(); y++) {
+            for (int x = 0; x < ecDim.getX(); x++) {
+                if (ecInv.peek(x, y).isPresent()) {
+                    enderChest.put(10 * x + y, ecInv.peek(x, y).get().createSnapshot());
+                }
             }
         }
 
-        for (Inventory slot : inventory.getMain().slots()) {
-            if (slot.peek().isPresent()) {
-                main.add(slot.peek().get().createSnapshot());
+        GridInventory mainInv = inventory.getMain();
+        Vector2i mainDim = mainInv.getDimensions();
+        for (int y = 0; y < mainDim.getY(); y++) {
+            for (int x = 0; x < mainDim.getX(); x++) {
+                if (mainInv.peek(x, y).isPresent()) {
+                    main.put(10 * x + y, mainInv.peek(x, y).get().createSnapshot());
+                }
             }
         }
+
+//        for (Inventory slot : enderChestInventory.slots()) {
+//            if (slot.peek().isPresent()) {
+//                enderChest.add(slot.peek().get().createSnapshot());
+//            }
+//        }
+//
+//        for (Inventory slot : inventory.getMain().slots()) {
+//            if (slot.peek().isPresent()) {
+//                main.add(slot.peek().get().createSnapshot());
+//            }
+//        }
 
         if (player.getItemInHand(HandTypes.OFF_HAND).isPresent()) {
             offhand = player.getItemInHand(HandTypes.OFF_HAND).get().createSnapshot();
@@ -177,10 +203,10 @@ class AMPlayerData {
         PlayerInventory playerInventory = (PlayerInventory) player.getInventory();
         playerInventory.clear();
 
-        Inventory equipment = playerInventory.getEquipment();
-        Inventory hotbar = playerInventory.getHotbar();
-        Inventory enderChest = player.getEnderChestInventory();
-        Inventory main = playerInventory.getMain();
+        EquipmentInventory equipment = playerInventory.getEquipment();
+        Hotbar hotbar = playerInventory.getHotbar();
+        GridInventory enderChest = player.getEnderChestInventory().query(GridInventory.class);
+        GridInventory main = playerInventory.getMain();
 
         if (this.equipment != null) {
             for (int slotIndex : this.equipment.keySet()) {
@@ -195,14 +221,18 @@ class AMPlayerData {
         }
 
         if (this.enderChest != null) {
-            for (ItemStackSnapshot itemStackSnapshot : this.enderChest) {
-                enderChest.offer(itemStackSnapshot.createStack());
+            for (int pos : this.enderChest.keySet()) {
+                int x = pos / 10;
+                int y = pos % 10;
+                enderChest.set(x, y, this.enderChest.get(pos).createStack());
             }
         }
 
         if (this.main != null) {
-            for (ItemStackSnapshot itemStackSnapshot : this.main) {
-                main.offer(itemStackSnapshot.createStack());
+            for (int pos : this.main.keySet()) {
+                int x = pos / 10;
+                int y = pos % 10;
+                main.set(x, y, this.main.get(pos).createStack());
             }
         }
 

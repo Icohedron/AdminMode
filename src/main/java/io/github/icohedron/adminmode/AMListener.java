@@ -9,6 +9,7 @@ import org.spongepowered.api.event.entity.DamageEntityEvent;
 import org.spongepowered.api.event.filter.cause.First;
 import org.spongepowered.api.event.item.inventory.ChangeInventoryEvent;
 import org.spongepowered.api.event.item.inventory.DropItemEvent;
+import org.spongepowered.api.item.inventory.ItemStackSnapshot;
 
 import java.util.Optional;
 
@@ -45,9 +46,12 @@ public class AMListener {
     }
 
     @Listener
-    public void onItemDrop(DropItemEvent event, @First Player player) {
+    public void onItemDrop(DropItemEvent.Pre event, @First Player player) {
         if (!adminMode.hasAttribute("drop_items")) {
             if (adminMode.isInAdminMode(player)) {
+                for (ItemStackSnapshot itemStackSnapshot : event.getDroppedItems()) {
+                    player.getInventory().offer(itemStackSnapshot.createStack());
+                }
                 event.setCancelled(true);
             }
         }

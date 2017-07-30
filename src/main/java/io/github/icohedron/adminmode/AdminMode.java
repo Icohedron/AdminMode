@@ -15,8 +15,6 @@ import org.spongepowered.api.command.spec.CommandSpec;
 import org.spongepowered.api.config.ConfigDir;
 import org.spongepowered.api.data.key.Keys;
 import org.spongepowered.api.entity.living.player.Player;
-import org.spongepowered.api.entity.living.player.gamemode.GameMode;
-import org.spongepowered.api.entity.living.player.gamemode.GameModes;
 import org.spongepowered.api.event.Listener;
 import org.spongepowered.api.event.filter.cause.First;
 import org.spongepowered.api.event.game.GameReloadEvent;
@@ -48,7 +46,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
-@Plugin(id = "adminmode", name = "Admin Mode", version = "2.0.0-S5.1-SNAPSHOT-4",
+@Plugin(id = "adminmode", name = "Admin Mode", version = "2.0.0-S5.1-SNAPSHOT-5",
         description = "Admin mode for survival servers")
 public class AdminMode {
 
@@ -63,6 +61,8 @@ public class AdminMode {
 
     private ConfigurationLoader<CommentedConfigurationNode> amplayerdataConfig;
     private ConfigurationNode amplayerdataNode;
+
+    private Set<UUID> leftViaDisconnect;
 
     private Map<UUID, AMPlayerData> active;
     private List<ItemStackSnapshot> adminModeItems;
@@ -91,6 +91,7 @@ public class AdminMode {
     @Listener
     public void onInitialization(GameInitializationEvent event) {
         active = new HashMap<>();
+        leftViaDisconnect = new HashSet<>();
 
         Optional<PermissionService> permissionServiceOptional = Sponge.getServiceManager().provide(PermissionService.class);
         if (permissionServiceOptional.isPresent()) {
@@ -100,6 +101,7 @@ public class AdminMode {
 
         loadConfig();
         loadPlayerData();
+        deserializeLeftViaDisconnect();
         registerCommands();
         Sponge.getEventManager().registerListeners(this, new AMListener());
         logger.info("Finished initialization");
@@ -303,7 +305,7 @@ public class AdminMode {
         AMPlayerData playerData = active.get(player.getUniqueId());
 
         // Remove player data from disk
-        removePlayerData(playerData);
+        deserializePlayerData(player.getUniqueId());
 
         // Restore player's inventory, food, and experience
         playerData.restore(player);
@@ -348,11 +350,38 @@ public class AdminMode {
         }
     }
 
-    private void removePlayerData(AMPlayerData playerData) {
+    private AMPlayerData deserializePlayerData(UUID uuid) {
         try {
-            amplayerdataNode.removeChild(playerData.getUniqueId().toString());
+            AMPlayerData amPlayerData = amplayerdataNode.getNode(uuid.toString()).getValue(TypeToken.of(AMPlayerData.class));
+            amplayerdataNode.removeChild(uuid.toString());
             amplayerdataConfig.save(amplayerdataNode);
-        } catch (IOException e) {
+            return amPlayerData;
+        } catch (IOException | ObjectMappingException e) {
+            logger.error("An error has occurred while writing to amplayerdata file: ");
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    private void serializeLeftViaDisconnect() {
+        try {
+            amplayerdataNode.getNode("leftViaDisconnect").setValue(new TypeToken<Set<UUID>>() {}, leftViaDisconnect);
+            amplayerdataConfig.save(amplayerdataNode);
+        } catch (IOException | ObjectMappingException e) {
+            logger.error("An error has occurred while writing to amplayerdata file: ");
+            e.printStackTrace();
+        }
+    }
+
+    private void deserializeLeftViaDisconnect() {
+        try {
+            Set<UUID> uuidList = amplayerdataNode.getNode("leftViaDisconnect").getValue(new TypeToken<Set<UUID>>() {});
+            if (uuidList != null) {
+                leftViaDisconnect = uuidList;
+            }
+            amplayerdataNode.removeChild(amplayerdataNode.getNode("leftViaDisconnect"));
+            amplayerdataConfig.save(amplayerdataNode);
+        } catch (IOException | ObjectMappingException e) {
             logger.error("An error has occurred while writing to amplayerdata file: ");
             e.printStackTrace();
         }
@@ -386,28 +415,24 @@ public class AdminMode {
         return attributes.get(attribute);
     }
 
+    Logger getLogger() {
+        return logger;
+    }
+
     @Listener
     public void onPlayerConnect(ClientConnectionEvent.Join event, @First Player player) {
-
         // Restore player data upon reconnect (in the case of a crash, the player's data should be here)
         final ConfigurationNode node = amplayerdataNode.getNode(player.getUniqueId().toString());
         if (!node.isVirtual()) {
-
-            try {
-                AMPlayerData playerData = node.getValue(TypeToken.of(AMPlayerData.class));
-                playerData.restore(player);
-                active.remove(player.getUniqueId());
-                disableFlight(player);
-                removePlayerData(playerData);
-            } catch (ObjectMappingException e) {
-                e.printStackTrace();
-            }
-
+            AMPlayerData playerData = deserializePlayerData(player.getUniqueId());
+            playerData.restore(player);
+            active.remove(player.getUniqueId());
+            disableFlight(player);
         }
 
-        // For some reason, this must be here in order to prevent flight persisting across disconnects and server restarts/crashes even though we already disabled flight.
-        GameMode gameMode = player.get(Keys.GAME_MODE).get();
-        if (gameMode.equals(GameModes.SURVIVAL) || gameMode.equals(GameModes.ADVENTURE)) {
+        // Necessary since disabling flight immediately before a player disconnection / server restart may not always finish
+        if (leftViaDisconnect.contains(player.getUniqueId())) {
+            leftViaDisconnect.remove(player.getUniqueId());
             disableFlight(player);
         }
     }
@@ -415,6 +440,7 @@ public class AdminMode {
     @Listener
     public void onPlayerDisconnect(ClientConnectionEvent.Disconnect event, @First Player player) {
         if (isInAdminMode(player)) {
+            leftViaDisconnect.add(player.getUniqueId());
             disableAdminMode(player, "<Disconnect>");
         }
     }
@@ -429,8 +455,10 @@ public class AdminMode {
     public void onGameStoppingServerEvent(GameStoppingServerEvent event) {
         for (Player player : Sponge.getServer().getOnlinePlayers()) {
             if (isInAdminMode(player)) {
+                leftViaDisconnect.add(player.getUniqueId());
                 disableAdminMode(player, "<Server Stopping>");
             }
         }
+        serializeLeftViaDisconnect();
     }
 }
