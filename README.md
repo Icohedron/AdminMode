@@ -87,15 +87,32 @@ items: [
 
 # Attributes available to players in admin mode
 attributes: {
+    # godmode determines whether or not the player can take damage of any kind
     godmode: true
+
+    # damage_other_entities determines whether or not the player can damage other entities (including other players)
     damage_other_entities: false
+
+    # interact_entity determines whether or not the player can right-click (interact with) an entity
+    interact_entity: false
+
+    # break_blocks determines whether or not the player can break blocks
     break_blocks: false
+
+    # place_blocks determines whether or not the player can place blocks
     place_blocks: false
+
+    # drop_items determines whether the player can drop items or not
     drop_items: false
+
+    # pickup_items determines whether item entities can be picked up
     pickup_items: false
+
+    # move_items determines whether items can be moved around in inventories (chests, ender chests, player inventory, shulker boxes, etc.)
+    move_items: false
 }
 ```
 
 ### Known bugs
 - '/amclearperms' and '/adminmodeclearperms' *may* have a delay (up to 3 seconds or so) between command execution and the permissions being removed. Rarely may fail to work at all (just re-execute the command if this happens)
-- In admin mode, with the "drop_items" attribute false, dropped items are returned to the player in the first available hotbar or grid slot. However, if a player drops an item while their inventory ui is open, the reappeared item may not display despite it being there.
+- In admin mode, with the "drop_items" attribute false, dropped items are returned to the player in the first available hotbar or grid slot. However, if a player drops an item while their inventory ui is open, the reappeared item may not display despite it actually being there.

@@ -1,11 +1,14 @@
 package io.github.icohedron.adminmode;
 
+import com.google.common.collect.Iterables;
 import org.spongepowered.api.entity.Entity;
 import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.event.Listener;
 import org.spongepowered.api.event.block.ChangeBlockEvent;
 import org.spongepowered.api.event.cause.entity.damage.source.EntityDamageSource;
 import org.spongepowered.api.event.entity.DamageEntityEvent;
+import org.spongepowered.api.event.entity.InteractEntityEvent;
+import org.spongepowered.api.event.entity.RideEntityEvent;
 import org.spongepowered.api.event.filter.cause.First;
 import org.spongepowered.api.event.item.inventory.ChangeInventoryEvent;
 import org.spongepowered.api.event.item.inventory.DropItemEvent;
@@ -67,6 +70,18 @@ public class AMListener {
     }
 
     @Listener
+    public void onMoveItem(ChangeInventoryEvent event, @First Player player) {
+        if (event instanceof ChangeInventoryEvent.Held || event instanceof ChangeInventoryEvent.Pickup) {
+            return;
+        }
+        if (!adminMode.hasAttribute("move_items")) {
+            if (adminMode.isInAdminMode(player)) {
+                event.setCancelled(true);
+            }
+        }
+    }
+
+    @Listener
     public void onBreakBlock(ChangeBlockEvent.Break event, @First Player player) {
         if (!adminMode.hasAttribute("break_blocks")) {
             if (adminMode.isInAdminMode(player)) {
@@ -78,6 +93,15 @@ public class AMListener {
     @Listener
     public void onPlaceBlock(ChangeBlockEvent.Place event, @First Player player) {
         if (!adminMode.hasAttribute("place_blocks")) {
+            if (adminMode.isInAdminMode(player)) {
+                event.setCancelled(true);
+            }
+        }
+    }
+
+    @Listener
+    public void onSecondaryInteract(InteractEntityEvent.Secondary event, @First Player player) {
+        if (!adminMode.hasAttribute("interact_entity")) {
             if (adminMode.isInAdminMode(player)) {
                 event.setCancelled(true);
             }

@@ -10,7 +10,7 @@ repositories {
 }
 
 group 'io.github.icohedron.adminmode'
-version = '2.0.0-S5.1-SNAPSHOT-5'
+version = '2.0.0-S5.1-SNAPSHOT-6'
 
 description = 'Admin mode for survival servers'
 
