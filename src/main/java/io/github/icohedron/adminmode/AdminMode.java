@@ -46,7 +46,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
-@Plugin(id = "adminmode", name = "Admin Mode", version = "2.0.0-S5.1-SNAPSHOT-6",
+@Plugin(id = "adminmode", name = "Admin Mode", version = "2.0.0-S5.1-SNAPSHOT-7",
         description = "Admin mode for survival servers")
 public class AdminMode {
 
@@ -141,14 +141,9 @@ public class AdminMode {
                 }
 
                 attributes = new HashMap<>();
-                attributes.put("godmode", rootNode.getNode("attributes", "godmode").getBoolean(true));
-                attributes.put("damage_other_entities", rootNode.getNode("attributes", "damage_other_entities").getBoolean(false));
-                attributes.put("interact_entity", rootNode.getNode("attributes", "interact_entity").getBoolean(false));
-                attributes.put("break_blocks", rootNode.getNode("attributes", "break_blocks").getBoolean(false));
-                attributes.put("place_blocks", rootNode.getNode("attributes", "place_blocks").getBoolean(false));
-                attributes.put("drop_items", rootNode.getNode("attributes", "drop_items").getBoolean(false));
-                attributes.put("pickup_items", rootNode.getNode("attributes", "pickup_items").getBoolean(false));
-                attributes.put("move_items", rootNode.getNode("attributes", "move_items").getBoolean(false));
+                rootNode.getNode("attributes").getChildrenMap().forEach((key, value) -> {
+                    attributes.put((String) key, value.getBoolean(true));
+                });
             }
         } catch (IOException | ObjectMappingException e) {
             logger.error("An error has occurred while reading the configuration file: ");
@@ -414,7 +409,11 @@ public class AdminMode {
     }
 
     boolean hasAttribute(String attribute) {
-        return attributes.get(attribute);
+        try {
+            return attributes.get(attribute);
+        } catch (NullPointerException e) {
+            return true;
+        }
     }
 
     Logger getLogger() {

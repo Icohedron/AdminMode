@@ -9,7 +9,7 @@ A plugin that gives administrators (particularly in survival mode) abilities tha
 - Messages that broadcast to other admins (such as when a player enters/leaves admin mode) (uses the permission 'adminmode.notify')
 - View a list of players that are currently in admin mode ('/amlist' or '/adminmodelist')
 - Kick a player out of admin mode ('/amkick' or '/adminmodekick')
-- Modifiable (on/off) attributes: godmode, damage other entities, pickup/drop items, break/place blocks
+- Modifiable (on/off) attributes controlling the abilities that players in admin mode have (e.g. taking damage, giving damage, block and entity interactions, inventory interaction, etc.)
 - Players in admin mode are put back to their pre-admin mode state when they disconnect from the server
 - Crash safe. If the server crashes, all players that were in admin mode are restored back to their pre-admin mode state upon reconnection to the server. (If the server crashed, the file amplayerdata.dat will contain all the information needed for the plugin to restore the player's pre-admin mode state. Most of the time, this file should be empty when the server is off)
 
@@ -87,14 +87,11 @@ items: [
 
 # Attributes available to players in admin mode
 attributes: {
-    # godmode determines whether or not the player can take damage of any kind
-    godmode: true
-
     # damage_other_entities determines whether or not the player can damage other entities (including other players)
     damage_other_entities: false
 
-    # interact_entity determines whether or not the player can right-click (interact with) an entity
-    interact_entity: false
+    # interact_entity determines whether or not the player can right-click (interact with) an entity. Useful for preventing interaction with ridable entities (horses, saddled pigs, etc) and villagers
+    interact_entities: false
 
     # break_blocks determines whether or not the player can break blocks
     break_blocks: false
@@ -102,14 +99,20 @@ attributes: {
     # place_blocks determines whether or not the player can place blocks
     place_blocks: false
 
-    # drop_items determines whether the player can drop items or not
+    # interact_blocks determines whether or not the player can right-click interact with blocks (opening doors, trapdoors, buttons, etc.)
+    interact_blocks: false
+
+    # interact_tile_entity_carriers determines whether or not the player can open the inventories of blocks with inventories (chests, beacons, furnaces, droppers, hoppers, etc.)
+    interact_tile_entity_carriers: true
+
+    # drop_items determines whether the player can drop items / create item entities
     drop_items: false
 
-    # pickup_items determines whether item entities can be picked up
+    # pickup_items determines whether the player can pick up item entities
     pickup_items: false
 
-    # move_items determines whether items can be moved around in inventories (chests, ender chests, player inventory, shulker boxes, etc.)
-    move_items: false
+    # interact_inventories determines whether items can be moved around in inventories (chests, ender chests, player inventory, shulker boxes, etc.)
+    interact_inventories: false
 }
 ```
 
