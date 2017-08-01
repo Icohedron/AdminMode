@@ -119,4 +119,4 @@ attributes: {
 ### Known bugs
 - '/amclearperms' and '/adminmodeclearperms' *may* have a delay (up to 3 seconds or so) between command execution and the permissions being removed. Rarely may fail to work at all (just re-execute the command if this happens)
 - In admin mode, with the "drop_items" attribute false, dropped items are returned to the player in the first available hotbar or grid slot. However, if a player drops an item while their inventory ui is open, the reappeared item may not display despite it actually being there.
-- 'interact_blocks' attribute prevents the usage of right-click interaction with items in the player's hand as well if the player is looking at (and is in range of) a block. (e.g. Setting pos2 with the worldedit wand, Right-clicking to use /thru with a compass)
+- 'interact_blocks' attribute prevents the usage of right-click interaction with items in the player's hand if the player is looking at (and is in range of) a block. (e.g. Setting pos2 with the worldedit wand, Right-clicking a wall go /thru it with a compass)
