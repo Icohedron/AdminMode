@@ -40,13 +40,14 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
-@Plugin(id = "adminmode", name = "Admin Mode", version = "2.0.0-S5.1-SNAPSHOT-7",
+@Plugin(id = "adminmode", name = "Admin Mode", version = "2.0.0-S5.1-SNAPSHOT-9",
         description = "Admin mode for survival servers")
 public class AdminMode {
 
@@ -62,7 +63,9 @@ public class AdminMode {
     private ConfigurationLoader<CommentedConfigurationNode> amplayerdataConfig;
     private ConfigurationNode amplayerdataNode;
 
-    private Set<UUID> leftViaDisconnect;
+    // A set would be a better data structure for this, but it has trouble being serialized on some Linux machines.
+//    private Set<UUID> leftViaDisconnect;
+    private List<UUID> leftViaDisconnect;
 
     private Map<UUID, AMPlayerData> active;
     private List<ItemStackSnapshot> adminModeItems;
@@ -91,7 +94,8 @@ public class AdminMode {
     @Listener
     public void onInitialization(GameInitializationEvent event) {
         active = new HashMap<>();
-        leftViaDisconnect = new HashSet<>();
+//        leftViaDisconnect = new HashSet<>();
+        leftViaDisconnect = new LinkedList<>();
 
         Optional<PermissionService> permissionServiceOptional = Sponge.getServiceManager().provide(PermissionService.class);
         if (permissionServiceOptional.isPresent()) {
@@ -243,10 +247,20 @@ public class AdminMode {
                 })
                 .build();
 
-        Sponge.getCommandManager().register(this, adminmode, "adminmode");
+        CommandSpec reload = CommandSpec.builder()
+                .permission("adminmode.command.reload")
+                .executor((src, args) -> {
+                    loadConfig();
+                    src.sendMessage(Text.of(prefix, TextColors.YELLOW, "Reloaded configuration"));
+                    return CommandResult.success();
+                })
+                .build();
+
+        Sponge.getCommandManager().register(this, adminmode, "adminmode", "am");
         Sponge.getCommandManager().register(this, adminmodelist, "adminmodelist", "amlist");
         Sponge.getCommandManager().register(this, adminmodekick, "adminmodekick", "amkick");
         Sponge.getCommandManager().register(this, clearPermissions, "adminmodeclearperms", "amclearperms");
+        Sponge.getCommandManager().register(this, reload, "adminmodereload", "amreload");
     }
 
     private CommandResult enableAdminMode(Player player, String reason) {
@@ -362,7 +376,8 @@ public class AdminMode {
 
     private void serializeLeftViaDisconnect() {
         try {
-            amplayerdataNode.getNode("leftViaDisconnect").setValue(new TypeToken<Set<UUID>>() {}, leftViaDisconnect);
+//            amplayerdataNode.getNode("leftViaDisconnect").setValue(new TypeToken<Set<UUID>>() {}, leftViaDisconnect);
+            amplayerdataNode.getNode("leftViaDisconnect").setValue(new TypeToken<List<UUID>>() {}, leftViaDisconnect);
             amplayerdataConfig.save(amplayerdataNode);
         } catch (IOException | ObjectMappingException e) {
             logger.error("An error has occurred while writing to amplayerdata file: ");
@@ -372,7 +387,11 @@ public class AdminMode {
 
     private void deserializeLeftViaDisconnect() {
         try {
-            Set<UUID> uuidList = amplayerdataNode.getNode("leftViaDisconnect").getValue(new TypeToken<Set<UUID>>() {});
+//            Set<UUID> uuidList = amplayerdataNode.getNode("leftViaDisconnect").getValue(new TypeToken<Set<UUID>>() {});
+//            if (uuidList != null) {
+//                leftViaDisconnect = uuidList;
+//            }
+            List<UUID> uuidList = amplayerdataNode.getNode("leftViaDisconnect").getValue(new TypeToken<List<UUID>>() {});
             if (uuidList != null) {
                 leftViaDisconnect = uuidList;
             }
