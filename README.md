@@ -1,5 +1,6 @@
 # Admin Mode
-A plugin that gives administrators (particularly in survival mode) abilities that make their jobs easier to do.
+A plugin that gives administrators (particularly in survival mode) abilities that make their jobs easier to do.  
+*Still in development/testing*
 
 ## Features
 - Upon entering admin mode, the player's current inventory, food, experience, status effects, and location is stored in memory. When the player leaves admin mode, their inventory, food, experience, status effects, and location are restored
