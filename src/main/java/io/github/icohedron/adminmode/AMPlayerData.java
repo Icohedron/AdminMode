@@ -4,7 +4,6 @@ import com.flowpowered.math.vector.Vector2i;
 import ninja.leaping.configurate.objectmapping.Setting;
 import ninja.leaping.configurate.objectmapping.serialize.ConfigSerializable;
 import org.spongepowered.api.data.manipulator.mutable.PotionEffectData;
-import org.spongepowered.api.data.manipulator.mutable.entity.ExperienceHolderData;
 import org.spongepowered.api.data.manipulator.mutable.entity.FoodData;
 import org.spongepowered.api.data.manipulator.mutable.entity.IgniteableData;
 import org.spongepowered.api.data.type.HandTypes;
@@ -33,7 +32,8 @@ class AMPlayerData {
     @Setting private UUID uuid;
     @Setting private Location location;
 
-    @Setting private ExperienceHolderData experienceData;
+    // Experience data will not be cached, due to bugs with how Sponge handles experience data
+//    @Setting private ExperienceHolderData experienceData;
     @Setting private PotionEffectData potionEffectData;
     @Setting private IgniteableData igniteableData;
 
@@ -57,7 +57,7 @@ class AMPlayerData {
         this.uuid = player.getUniqueId();
         this.location = player.getLocation();
 
-        this.experienceData = player.get(ExperienceHolderData.class).get();
+//        this.experienceData = player.get(ExperienceHolderData.class).get();
 
         this.potionEffectData = null;
         Optional<PotionEffectData> potionEffectData = player.get(PotionEffectData.class);
@@ -124,18 +124,6 @@ class AMPlayerData {
             }
         }
 
-//        for (Inventory slot : enderChestInventory.slots()) {
-//            if (slot.peek().isPresent()) {
-//                enderChest.add(slot.peek().get().createSnapshot());
-//            }
-//        }
-//
-//        for (Inventory slot : inventory.getMain().slots()) {
-//            if (slot.peek().isPresent()) {
-//                main.add(slot.peek().get().createSnapshot());
-//            }
-//        }
-
         if (player.getItemInHand(HandTypes.OFF_HAND).isPresent()) {
             offhand = player.getItemInHand(HandTypes.OFF_HAND).get().createSnapshot();
         }
@@ -150,11 +138,11 @@ class AMPlayerData {
         player.getEnderChestInventory().clear();
         player.setItemInHand(HandTypes.OFF_HAND, null);
 
-        ExperienceHolderData minExp = player.get(ExperienceHolderData.class).get();
-        minExp.set(minExp.experienceSinceLevel().set(minExp.experienceSinceLevel().getMinValue()));
-        minExp.set(minExp.level().set(minExp.level().getMinValue()));
-        minExp.set(minExp.totalExperience().set(minExp.totalExperience().getMinValue()));
-        player.offer(minExp);
+//        ExperienceHolderData minExp = player.get(ExperienceHolderData.class).get();
+//        minExp.set(minExp.experienceSinceLevel().set(minExp.experienceSinceLevel().getMinValue()));
+//        minExp.set(minExp.level().set(minExp.level().getMinValue()));
+//        minExp.set(minExp.totalExperience().set(minExp.totalExperience().getMinValue()));
+//        player.offer(minExp);
 
         Optional<PotionEffectData> effects = player.get(PotionEffectData.class);
         if (effects.isPresent()) {
@@ -172,9 +160,9 @@ class AMPlayerData {
         }
 
         FoodData maxFood = player.getFoodData();
-        maxFood.set(maxFood.exhaustion().set(maxFood.exhaustion().getMaxValue()));
-        maxFood.set(maxFood.saturation().set(maxFood.saturation().getMaxValue()));
-        maxFood.set(maxFood.foodLevel().set(maxFood.foodLevel().getMaxValue()));
+        maxFood.set(maxFood.exhaustion().set(maxFood.exhaustion().getDefault()));
+        maxFood.set(maxFood.saturation().set(maxFood.saturation().getDefault()));
+        maxFood.set(maxFood.foodLevel().set(maxFood.foodLevel().getDefault()));
         player.offer(maxFood);
     }
 
@@ -182,7 +170,7 @@ class AMPlayerData {
         clear(player);
 
         player.setLocation(location);
-        player.offer(experienceData);
+//        player.offer(experienceData);
 
         if (potionEffectData != null) {
             player.offer(potionEffectData);

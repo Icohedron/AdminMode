@@ -32,6 +32,8 @@ import org.spongepowered.api.service.permission.PermissionService;
 import org.spongepowered.api.text.Text;
 import org.spongepowered.api.text.channel.MessageReceiver;
 import org.spongepowered.api.text.format.TextColors;
+import org.spongepowered.api.text.format.TextFormat;
+import org.spongepowered.api.text.format.TextStyles;
 import org.spongepowered.api.util.Tristate;
 
 import java.io.File;
@@ -47,7 +49,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
-@Plugin(id = "adminmode", name = "Admin Mode", version = "2.0.0-S5.1-SNAPSHOT-9",
+@Plugin(id = "adminmode", name = "Admin Mode", version = "2.0.0-S5.1-SNAPSHOT-10",
         description = "Admin mode for survival servers")
 public class AdminMode {
 
@@ -171,8 +173,8 @@ public class AdminMode {
 
         try {
             amplayerdataNode = amplayerdataConfig.load();
-        } catch (IOException e) {
-            logger.error("An error has occurred while reading the amplayerdata file: ");
+        } catch (Exception e) {
+            logger.error("An error has occurred while reading the amplayerdata.dat file: ");
             e.printStackTrace();
         }
     }
@@ -257,10 +259,10 @@ public class AdminMode {
                 .build();
 
         Sponge.getCommandManager().register(this, adminmode, "adminmode", "am");
-        Sponge.getCommandManager().register(this, adminmodelist, "adminmodelist", "amlist");
-        Sponge.getCommandManager().register(this, adminmodekick, "adminmodekick", "amkick");
-        Sponge.getCommandManager().register(this, clearPermissions, "adminmodeclearperms", "amclearperms");
-        Sponge.getCommandManager().register(this, reload, "adminmodereload", "amreload");
+        Sponge.getCommandManager().register(this, adminmodelist, "amlist");
+        Sponge.getCommandManager().register(this, adminmodekick,  "amkick");
+        Sponge.getCommandManager().register(this, clearPermissions, "amclearperms");
+        Sponge.getCommandManager().register(this, reload, "amreload");
     }
 
     private CommandResult enableAdminMode(Player player, String reason) {
@@ -273,8 +275,11 @@ public class AdminMode {
         // Add to active admin mode players
         active.put(player.getUniqueId(), playerData);
 
-        // Clears inventory, food, and experience
+        // Clears player inventory and other data
         AMPlayerData.clear(player);
+
+        // Gives infinite saturation
+        player.offer(Keys.SATURATION, Double.MAX_VALUE);
 
         // Give items as specified in the config file
         for (ItemStackSnapshot itemSnapshot : adminModeItems) {
@@ -293,11 +298,10 @@ public class AdminMode {
         }
 
         // Broadcast going into admin mode message
-        Text text = Text.of(prefix, TextColors.YELLOW, "'", TextColors.GREEN, player.getName(), TextColors.YELLOW, "' has entered admin mode");
+        Text text = Text.of(prefix, TextColors.YELLOW, "'", TextColors.GREEN, player.getName(), TextColors.YELLOW, "' has entered admin mode!");
         if (reason != null) {
-            text = Text.of(text, TextColors.YELLOW, " to ", reason);
+            text = Text.of(text, TextColors.GRAY, " Reason: ", reason);
         }
-        text = Text.of(text, TextColors.YELLOW, "!");
         broadcastToAdmins(text);
 
         // Tell player that they are in admin mode if they haven't received the global message
@@ -316,7 +320,7 @@ public class AdminMode {
         AMPlayerData playerData = active.get(player.getUniqueId());
 
         // Remove player data from disk
-        deserializePlayerData(player.getUniqueId());
+        removePlayerData(player.getUniqueId());
 
         // Restore player's inventory, food, and experience
         playerData.restore(player);
@@ -356,7 +360,7 @@ public class AdminMode {
             amplayerdataNode.getNode(playerData.getUniqueId().toString()).setValue(TypeToken.of(AMPlayerData.class), playerData);
             amplayerdataConfig.save(amplayerdataNode);
         } catch (IOException | ObjectMappingException e) {
-            logger.error("An error has occurred while writing to amplayerdata file: ");
+            logger.error("An error has occurred while saving player data for '" + playerData.getUniqueId() + "': ");
             e.printStackTrace();
         }
     }
@@ -364,14 +368,23 @@ public class AdminMode {
     private AMPlayerData deserializePlayerData(UUID uuid) {
         try {
             AMPlayerData amPlayerData = amplayerdataNode.getNode(uuid.toString()).getValue(TypeToken.of(AMPlayerData.class));
-            amplayerdataNode.removeChild(uuid.toString());
-            amplayerdataConfig.save(amplayerdataNode);
+            removePlayerData(uuid);
             return amPlayerData;
-        } catch (IOException | ObjectMappingException e) {
-            logger.error("An error has occurred while writing to amplayerdata file: ");
+        } catch (ObjectMappingException | NullPointerException e) {
+            logger.error("An error has occurred while deserializing player data for '" + uuid.toString() + "': ");
             e.printStackTrace();
         }
         return null;
+    }
+
+    private void removePlayerData(UUID uuid) {
+        try {
+            amplayerdataNode.removeChild(uuid.toString());
+            amplayerdataConfig.save(amplayerdataNode);
+        } catch (IOException e) {
+            logger.error("An error has occurred while removing player data for '" + uuid.toString() + "': ");
+            e.printStackTrace();
+        }
     }
 
     private void serializeLeftViaDisconnect() {
@@ -380,7 +393,7 @@ public class AdminMode {
             amplayerdataNode.getNode("leftViaDisconnect").setValue(new TypeToken<List<UUID>>() {}, leftViaDisconnect);
             amplayerdataConfig.save(amplayerdataNode);
         } catch (IOException | ObjectMappingException e) {
-            logger.error("An error has occurred while writing to amplayerdata file: ");
+            logger.error("An error has occurred while writing to amplayerdata.dat file: ");
             e.printStackTrace();
         }
     }
@@ -398,7 +411,7 @@ public class AdminMode {
             amplayerdataNode.removeChild(amplayerdataNode.getNode("leftViaDisconnect"));
             amplayerdataConfig.save(amplayerdataNode);
         } catch (IOException | ObjectMappingException e) {
-            logger.error("An error has occurred while writing to amplayerdata file: ");
+            logger.error("An error has occurred while writing to amplayerdata.dat file: ");
             e.printStackTrace();
         }
     }
@@ -442,10 +455,24 @@ public class AdminMode {
     @Listener
     public void onPlayerConnect(ClientConnectionEvent.Join event, @First Player player) {
         // Restore player data upon reconnect (in the case of a crash, the player's data should be here)
-        final ConfigurationNode node = amplayerdataNode.getNode(player.getUniqueId().toString());
-        if (!node.isVirtual()) {
-            AMPlayerData playerData = deserializePlayerData(player.getUniqueId());
-            playerData.restore(player);
+        try {
+            final ConfigurationNode node = amplayerdataNode.getNode(player.getUniqueId().toString());
+            if (!node.isVirtual()) {
+                AMPlayerData playerData = deserializePlayerData(player.getUniqueId());
+                playerData.restore(player);
+                active.remove(player.getUniqueId());
+                disableFlight(player);
+            }
+        } catch (Exception e) {
+            logger.error("An error has occurred while restoring player data for player '" + player.getName() + "', UUID of '" + player.getUniqueId().toString() + "': ");
+            e.printStackTrace();
+            logger.error("The player's data should still be available in /config/adminmode/amplayerdata.dat in a mostly human-readable format. You can use the information in there to restore the player's items, and other data manually (e.g. using '/give')");
+            logger.error("After manually recovering the player's items and data from amplayerdata.dat (or saving it somewhere else for later), the player should re-run admin mode. This will overwrite their corrupted data in amplayerdata.dat so that this error should no longer occur");
+
+            player.sendMessage(Text.of(prefix, TextColors.RED, "An error has occurred while restoring your player data. If you have lost items or any other player-related data, contact a server operator to have your data restored"));
+            player.sendMessage(Text.of(prefix, TextColors.RED, TextStyles.BOLD, "If you need data to be recovered, DO NOT enter admin mode for the time being. ", TextStyles.RESET, "Doing so will result in your old player data being overwritten and unrecoverable"));
+            player.sendMessage(Text.of(prefix, TextColors.RED, "If you have no (more) data that has to be recovered, then you can safely enter admin mode so that this message will not be displayed again"));
+
             active.remove(player.getUniqueId());
             disableFlight(player);
         }
