@@ -29,10 +29,10 @@ import org.spongepowered.api.plugin.Plugin;
 import org.spongepowered.api.service.context.Context;
 import org.spongepowered.api.service.pagination.PaginationList;
 import org.spongepowered.api.service.permission.PermissionService;
+import org.spongepowered.api.service.permission.SubjectCollection;
 import org.spongepowered.api.text.Text;
 import org.spongepowered.api.text.channel.MessageReceiver;
 import org.spongepowered.api.text.format.TextColors;
-import org.spongepowered.api.text.format.TextFormat;
 import org.spongepowered.api.text.format.TextStyles;
 import org.spongepowered.api.util.Tristate;
 
@@ -48,9 +48,10 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 
-@Plugin(id = "adminmode", name = "Admin Mode", version = "2.0.0-S5.1-SNAPSHOT-10",
-        description = "Admin mode for survival servers")
+@Plugin(id = "adminmode", name = "Admin Mode", version = "1.0.0-S7.0",
+        description = "Admin mode for survival servers", authors = { "Icohedron" })
 public class AdminMode {
 
     private final Text prefix = Text.of(TextColors.GRAY, "[", TextColors.GOLD, "AdminMode", TextColors.GRAY, "] ");
@@ -436,8 +437,13 @@ public class AdminMode {
         // Clear contextual permissions
         final Set<Context> contexts = new HashSet<>();
         contexts.add(AMContextCalculator.IN_ADMIN_MODE);
-        final Optional<PermissionService> permissionService = getPermissionService();
-        permissionService.ifPresent(permissionService1 -> permissionService1.getKnownSubjects().forEach((key, value) -> value.getAllSubjects().forEach(subject -> subject.getSubjectData().clearPermissions(contexts))));
+        final Optional<PermissionService> permissionServiceOptional = getPermissionService();
+        if (permissionServiceOptional.isPresent()) {
+            SubjectCollection userSubjects = permissionServiceOptional.get().getUserSubjects();
+            CompletableFuture<Set<String>> completableFuture = userSubjects.getAllIdentifiers();
+            // Wait for the future to complete. Then for each identifier, get the identifier's Subject, then get the Subject's SubjectData, then clear the permissions of the permission contexts
+            completableFuture.thenAcceptAsync(identifiers -> identifiers.forEach(identifier -> userSubjects.getSubject(identifier).ifPresent(subject -> subject.getSubjectData().clearPermissions(contexts))));
+        }
     }
 
     boolean hasAttribute(String attribute) {

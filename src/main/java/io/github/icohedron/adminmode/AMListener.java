@@ -5,10 +5,10 @@ import org.spongepowered.api.block.tileentity.carrier.TileEntityCarrier;
 import org.spongepowered.api.entity.Entity;
 import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.event.Listener;
+import org.spongepowered.api.event.Order;
 import org.spongepowered.api.event.block.ChangeBlockEvent;
 import org.spongepowered.api.event.block.InteractBlockEvent;
 import org.spongepowered.api.event.cause.entity.damage.source.EntityDamageSource;
-import org.spongepowered.api.event.entity.ChangeEntityExperienceEvent;
 import org.spongepowered.api.event.entity.DamageEntityEvent;
 import org.spongepowered.api.event.entity.InteractEntityEvent;
 import org.spongepowered.api.event.filter.cause.First;
@@ -108,7 +108,7 @@ public class AMListener {
         }
     }
 
-    @Listener
+    @Listener(order = Order.LAST)
     public void onInteractBlock(InteractBlockEvent.Secondary event, @First Player player) {
         Optional<Location<World>> location = event.getTargetBlock().getLocation();
         if (location.isPresent()) {
